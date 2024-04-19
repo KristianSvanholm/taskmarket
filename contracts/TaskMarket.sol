@@ -22,11 +22,13 @@ contract Shitcoin {
 
     function faucet(uint256 _amount) external {
         require(wallets[market] >= _amount); // Has to have enough coin
+
         wallets[market] -= _amount;
         wallets[msg.sender] += _amount;
     }
 
     function transfer(address _to, uint256 _amount) external {
+        require(msg.sender != _to); // Cannot transfer to itself
         require(wallets[msg.sender] >= _amount); // Has to have enough coin
 
         wallets[msg.sender] -= _amount;
@@ -37,6 +39,7 @@ contract Shitcoin {
 
     function transferFrom(address _from, address _to, uint256 _amount) external {
         require(msg.sender == market); // Only market can do this
+        require(_from != _to); // Cannot transfer to itself
         require(wallets[_from] >= _amount); // Has to have enough coin
 
         wallets[_from] -= _amount;
@@ -64,6 +67,12 @@ contract TaskMarket {
     }
 
     function NewTask(address _who, uint256 _pay) external {
+        require(sht.wallets(msg.sender) >= _pay);
+        require(msg.sender != _who); // Cannot make task for yourself
+        require(_pay > 0); // pay must be more than 0
+        
+        sht.transferFrom(msg.sender, address(this), _pay);
+
         tasks.push(Task(msg.sender, _pay, _who, false));
     }
 
@@ -85,7 +94,7 @@ contract TaskMarket {
 
     function AcceptTask(uint id) external TaskDoneAndOwner(id) {
         Task memory t = tasks[id];
-        sht.transferFrom(t.owner, t.rabbit, t.payment); // Send money
+        sht.transferFrom(address(this), t.rabbit, t.payment); // Send money
         delete tasks[id]; // Delete task
     }
 
