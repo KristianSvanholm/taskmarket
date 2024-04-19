@@ -4,31 +4,89 @@ pragma solidity ^0.8.24;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
+contract Shitcoin {
+    mapping(address => uint256) public wallets;
+    uint256 marketCap = 10000000;
+    
+    address public market;
 
-    event Withdrawal(uint amount, uint when);
-
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
-
-        unlockTime = _unlockTime;
-        owner = payable(msg.sender);
+    constructor(address _market){
+        market = _market;
+        wallets[market] = marketCap;
     }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+    event Transfer(address _from, address _to, uint256 _amount);
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+    function faucet(uint256 _amount) external {
+        require(wallets[market] >= _amount); // Has to have enough coin
+        wallets[market] -= _amount;
+        wallets[msg.sender] += _amount;
+    }
 
-        emit Withdrawal(address(this).balance, block.timestamp);
+    function transfer(address _to, uint256 _amount) external {
+        require(wallets[msg.sender] >= _amount); // Has to have enough coin
 
-        owner.transfer(address(this).balance);
+        wallets[msg.sender] -= _amount;
+        wallets[_to] += _amount;
+
+        emit Transfer(msg.sender, _to, _amount);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _amount) external {
+        require(msg.sender == market); // Only market can do this
+        require(wallets[_from] >= _amount); // Has to have enough coin
+
+        wallets[_from] -= _amount;
+        wallets[_to] += _amount;
+
+        emit Transfer(_from, _to, _amount);
+    }
+}
+
+contract TaskMarket {
+
+    Shitcoin public sc;
+    
+    struct Task {
+        address owner;
+        uint256 payment;
+        address rabbit;
+        bool done;
+    }
+
+    Task[] public tasks;
+
+    constructor(){
+        sc = new Shitcoin(address(this));
+    }
+
+    function NewTask(address _who, uint256 _pay) external {
+        tasks.push(Task(msg.sender, _pay, _who, false));
+    }
+
+    function FinishTask(uint id) external {
+        Task storage t = tasks[id];
+
+        require(!t.done); // Task cannot be done already
+        require(t.rabbit == msg.sender);
+
+        t.done = true; // Mark task as done
+    }
+
+    modifier TaskDoneAndOwner(uint id) {
+        Task storage t = tasks[id];
+        require(t.done);
+        require(t.owner == msg.sender);
+        _;
+    }
+
+    function AcceptTask(uint id) external TaskDoneAndOwner(id) {
+        Task memory t = tasks[id];
+        sc.transferFrom(t.owner, t.rabbit, t.payment); // Send money
+        delete tasks[id]; // Delete task
+    }
+
+    function RequestChanges(uint id) external  TaskDoneAndOwner(id) {
+        tasks[id].done = false;
     }
 }
