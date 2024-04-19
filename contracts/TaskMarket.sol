@@ -5,6 +5,9 @@ pragma solidity ^0.8.24;
 // import "hardhat/console.sol";
 
 contract Shitcoin {
+    string public name = "ShitCoin";
+    string public symbol = "SHT";
+
     mapping(address => uint256) public wallets;
     uint256 marketCap = 10000000;
     
@@ -45,7 +48,7 @@ contract Shitcoin {
 
 contract TaskMarket {
 
-    Shitcoin public sc;
+    Shitcoin public sht;
     
     struct Task {
         address owner;
@@ -57,7 +60,7 @@ contract TaskMarket {
     Task[] public tasks;
 
     constructor(){
-        sc = new Shitcoin(address(this));
+        sht = new Shitcoin(address(this));
     }
 
     function NewTask(address _who, uint256 _pay) external {
@@ -82,7 +85,7 @@ contract TaskMarket {
 
     function AcceptTask(uint id) external TaskDoneAndOwner(id) {
         Task memory t = tasks[id];
-        sc.transferFrom(t.owner, t.rabbit, t.payment); // Send money
+        sht.transferFrom(t.owner, t.rabbit, t.payment); // Send money
         delete tasks[id]; // Delete task
     }
 
