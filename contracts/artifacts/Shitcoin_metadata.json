@@ -42,16 +42,10 @@
 				"type": "event"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					}
-				],
-				"name": "faucet",
+				"inputs": [],
+				"name": "buy",
 				"outputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -182,11 +176,11 @@
 	},
 	"sources": {
 		"contracts/TaskMarket.sol": {
-			"keccak256": "0xf652b632d64b757d056fbcf2fa96a1e62540c640b275e4e5452503bf29fb5c6a",
+			"keccak256": "0xc491c50216c5dd95b2bb187915ed682a38f8f76a43196c78589b3ef9a991fe7b",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://bb3304041734573587adc20ff5d782e0e00db00b0de5fd8f79c1ea00eb00037b",
-				"dweb:/ipfs/QmcNw5eajCUNLs2Dr6EfGSSnHx5oUF2HWLr8M4gNmQgmMo"
+				"bzz-raw://5fb346c78914d5f1e93b56681e02418765c16fcb28658fc884c93b945d475fe7",
+				"dweb:/ipfs/QmeZWg1CrXeDzhcZVeaWQWuR2HR4nNU9LFCQbQy7cgwJWQ"
 			]
 		}
 	},

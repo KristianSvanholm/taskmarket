@@ -39,23 +39,21 @@ describe("TaskMarket", function () {
     describe("Shitcoin", function() {
         it("Should give money to user trough faucet", async function () {
             const {shitcoin, addressA} = await loadFixture(deployFixture);
-                
-            await shitcoin.connect(addressA).faucet(100);
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")});
 
-            await expect(await shitcoin.wallets(addressA)).to.equal(100);
+            await expect(await shitcoin.wallets(addressA)).to.equal(10000);
         });
 
         it("Should handle transaction", async function () {
             const {shitcoin, addressA, addressB} = await loadFixture(deployFixture);
                 
-            await shitcoin.connect(addressA).faucet(100);
-            await expect(await shitcoin.wallets(addressA)).to.equal(100);
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")});
+            await expect(await shitcoin.wallets(addressA)).to.equal(10000);
 
-            await expect(shitcoin.connect(addressA).transfer(addressB, 35)).to.emit(shitcoin, "Transfer");
+            await expect(shitcoin.connect(addressA).transfer(addressB, 3500)).to.emit(shitcoin, "Transfer");
             
-            await expect(await shitcoin.wallets(addressA)).to.equal(65);
-            await expect(await shitcoin.wallets(addressB)).to.equal(35);
-
+            await expect(await shitcoin.wallets(addressA)).to.equal(6500);
+            await expect(await shitcoin.wallets(addressB)).to.equal(3500);
         })
     });
     
@@ -69,16 +67,16 @@ describe("TaskMarket", function () {
         it("Should create and access tasks", async function () {
             const { taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
                 
-            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")}); // Give coin to owner
             await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
             await expect(taskmarket.tasks(0)).to.not.be.reverted; // Ensure the task has been created
         });
 
-        it("Should create and finsh task", async function () {
+        it("Should create and finish task", async function () {
             const { taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
             
-            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")}); // Give coin to owner
             await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
             await taskmarket.connect(addressB).FinishTask(0) // OtherAccount finished task
@@ -88,7 +86,7 @@ describe("TaskMarket", function () {
         it("Should create and reject task", async function () {
             const {taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
 
-            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")}); // Give coin to owner
             await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
             await taskmarket.connect(addressB).FinishTask(0) // OtherAccount finished task
@@ -100,7 +98,7 @@ describe("TaskMarket", function () {
         it("Should create and accept task", async function() { 
             const {taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
 
-            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await shitcoin.connect(addressA).buy({value: ethers.parseEther("1")}); // Give coin to owner
             await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
             await taskmarket.connect(addressB).FinishTask(0); // OtherAccount finished task

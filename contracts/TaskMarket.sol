@@ -20,11 +20,13 @@ contract Shitcoin {
 
     event Transfer(address _from, address _to, uint256 _amount);
 
-    function faucet(uint256 _amount) external {
-        require(wallets[market] >= _amount); // Has to have enough coin
+    function buy() external payable {
+        
+        uint256 amount = msg.value / 100000000000000;
+        require(wallets[market] >= amount); // Has to have enough coin
 
-        wallets[market] -= _amount;
-        wallets[msg.sender] += _amount;
+        wallets[market] -= amount;
+        wallets[msg.sender] += amount;
     }
 
     function transfer(address _to, uint256 _amount) external {
