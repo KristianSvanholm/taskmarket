@@ -1,11 +1,102 @@
 const {
-  time,
   loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 
-describe("Lock", function () {
+describe("TaskMarket", function () {
+
+    async function deployFixture() {
+        const [owner, otherAccount] = await ethers.getSigners();
+
+        const TaskMarket = await ethers.getContractFactory("TaskMarket");
+        const taskmarket = await TaskMarket.deploy();
+
+        const shitcoin = await ethers.getContractAt("Shitcoin", (await taskmarket.sht()));
+        return {taskmarket, shitcoin, owner, otherAccount};
+    }
+
+    describe("Deployment", function() {
+        it("Should initialize the shitcoin", async function () {
+            const { taskmarket, shitcoin } = await loadFixture(deployFixture);
+            
+            expect(await taskmarket.sht()).to.equal(await shitcoin.getAddress());
+        });
+
+        it("Should initialize the coin owner", async function () {
+            const { taskmarket, shitcoin } = await loadFixture(deployFixture);
+
+            expect(await shitcoin.market()).to.equal(await taskmarket.getAddress());
+        });
+
+        it("Should give the coin owner market cap", async function () {
+            const { taskmarket, shitcoin } = await loadFixture(deployFixture);
+
+            expect(await shitcoin.wallets(await taskmarket.getAddress())).to.equal(10000000);
+        });
+    });
+
+    describe("Shitcoin", function() {
+        it("Should give money to user trough faucet", async function () {
+            const {shitcoin, owner} = await loadFixture(deployFixture);
+                
+            await shitcoin.connect(owner).faucet(100);
+
+            await expect(await shitcoin.wallets(owner)).to.equal(100);
+        });
+    });
+    
+    describe("TaskManager", function() {
+        it("Should fail to access uninitialized tasks", async function () {
+            const { taskmarket } = await loadFixture(deployFixture);
+
+            await expect(taskmarket.tasks(0)).to.be.reverted;
+        });
+
+        it("Should create and access tasks", async function () {
+            const { taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+                
+            await shitcoin.connect(owner).faucet(10); // Give coin to owner
+            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            
+            await expect(taskmarket.tasks(0)).to.not.be.reverted; // Ensure the task has been created
+        });
+
+        it("Should create and finsh task", async function () {
+            const { taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+            
+            await shitcoin.connect(owner).faucet(10); // Give coin to owner
+            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            
+            await taskmarket.connect(otherAccount).FinishTask(0) // OtherAccount finished task
+            await expect((await taskmarket.tasks(0)).done).to.equal(true); 
+        });
+
+        it("Should create and reject task", async function () {
+            const {taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+
+            await shitcoin.connect(owner).faucet(10); // Give coin to owner
+            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            
+            await taskmarket.connect(otherAccount).FinishTask(0) // OtherAccount finished task
+            await expect((await taskmarket.tasks(0)).done).to.equal(true); // Ensure task is set to done
+            await taskmarket.connect(owner).RequestChanges(0);
+            await expect((await taskmarket.tasks(0)).done).to.equal(false); // Ensure task is set to not done 
+        });
+
+        it("Should create and accept task", async function() { 
+            const {taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+
+            await shitcoin.connect(owner).faucet(10); // Give coin to owner
+            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            
+            await taskmarket.connect(otherAccount).FinishTask(0); // OtherAccount finished task
+            await taskmarket.connect(owner).AcceptTask(0);
+            await expect((await taskmarket.tasks(0)).owner).to.not.equal(owner); // Check that the task has been cleared
+            await expect(await shitcoin.wallets(otherAccount)).to.equal(10); // Check that the money has been moved to correct account
+        })
+    })
+/*
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -122,5 +213,5 @@ describe("Lock", function () {
         );
       });
     });
-  });
+  });*/
 });
