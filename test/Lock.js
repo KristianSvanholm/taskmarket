@@ -44,6 +44,19 @@ describe("TaskMarket", function () {
 
             await expect(await shitcoin.wallets(owner)).to.equal(100);
         });
+
+        it("Should handle transaction", async function () {
+            const {shitcoin, owner, otherAccount} = await loadFixture(deployFixture);
+                
+            await shitcoin.connect(owner).faucet(100);
+            await expect(await shitcoin.wallets(owner)).to.equal(100);
+
+            await expect(shitcoin.connect(owner).transfer(otherAccount, 35)).to.emit(shitcoin, "Transfer");
+            
+            await expect(await shitcoin.wallets(owner)).to.equal(65);
+            await expect(await shitcoin.wallets(otherAccount)).to.equal(35);
+
+        })
     });
     
     describe("TaskManager", function() {
