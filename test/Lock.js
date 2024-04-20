@@ -7,13 +7,13 @@ const { expect } = require("chai");
 describe("TaskMarket", function () {
 
     async function deployFixture() {
-        const [owner, otherAccount] = await ethers.getSigners();
+        const [addressA, addressB] = await ethers.getSigners();
 
         const TaskMarket = await ethers.getContractFactory("TaskMarket");
         const taskmarket = await TaskMarket.deploy();
 
         const shitcoin = await ethers.getContractAt("Shitcoin", (await taskmarket.sht()));
-        return {taskmarket, shitcoin, owner, otherAccount};
+        return {taskmarket, shitcoin, addressA, addressB};
     }
 
     describe("Deployment", function() {
@@ -38,23 +38,23 @@ describe("TaskMarket", function () {
 
     describe("Shitcoin", function() {
         it("Should give money to user trough faucet", async function () {
-            const {shitcoin, owner} = await loadFixture(deployFixture);
+            const {shitcoin, addressA} = await loadFixture(deployFixture);
                 
-            await shitcoin.connect(owner).faucet(100);
+            await shitcoin.connect(addressA).faucet(100);
 
-            await expect(await shitcoin.wallets(owner)).to.equal(100);
+            await expect(await shitcoin.wallets(addressA)).to.equal(100);
         });
 
         it("Should handle transaction", async function () {
-            const {shitcoin, owner, otherAccount} = await loadFixture(deployFixture);
+            const {shitcoin, addressA, addressB} = await loadFixture(deployFixture);
                 
-            await shitcoin.connect(owner).faucet(100);
-            await expect(await shitcoin.wallets(owner)).to.equal(100);
+            await shitcoin.connect(addressA).faucet(100);
+            await expect(await shitcoin.wallets(addressA)).to.equal(100);
 
-            await expect(shitcoin.connect(owner).transfer(otherAccount, 35)).to.emit(shitcoin, "Transfer");
+            await expect(shitcoin.connect(addressA).transfer(addressB, 35)).to.emit(shitcoin, "Transfer");
             
-            await expect(await shitcoin.wallets(owner)).to.equal(65);
-            await expect(await shitcoin.wallets(otherAccount)).to.equal(35);
+            await expect(await shitcoin.wallets(addressA)).to.equal(65);
+            await expect(await shitcoin.wallets(addressB)).to.equal(35);
 
         })
     });
@@ -67,46 +67,46 @@ describe("TaskMarket", function () {
         });
 
         it("Should create and access tasks", async function () {
-            const { taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+            const { taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
                 
-            await shitcoin.connect(owner).faucet(10); // Give coin to owner
-            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
             await expect(taskmarket.tasks(0)).to.not.be.reverted; // Ensure the task has been created
         });
 
         it("Should create and finsh task", async function () {
-            const { taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+            const { taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
             
-            await shitcoin.connect(owner).faucet(10); // Give coin to owner
-            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
-            await taskmarket.connect(otherAccount).FinishTask(0) // OtherAccount finished task
+            await taskmarket.connect(addressB).FinishTask(0) // OtherAccount finished task
             await expect((await taskmarket.tasks(0)).done).to.equal(true); 
         });
 
         it("Should create and reject task", async function () {
-            const {taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+            const {taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
 
-            await shitcoin.connect(owner).faucet(10); // Give coin to owner
-            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
-            await taskmarket.connect(otherAccount).FinishTask(0) // OtherAccount finished task
+            await taskmarket.connect(addressB).FinishTask(0) // OtherAccount finished task
             await expect((await taskmarket.tasks(0)).done).to.equal(true); // Ensure task is set to done
-            await taskmarket.connect(owner).RequestChanges(0);
+            await taskmarket.connect(addressA).RequestChanges(0);
             await expect((await taskmarket.tasks(0)).done).to.equal(false); // Ensure task is set to not done 
         });
 
         it("Should create and accept task", async function() { 
-            const {taskmarket, shitcoin, owner, otherAccount } = await loadFixture(deployFixture);
+            const {taskmarket, shitcoin, addressA, addressB } = await loadFixture(deployFixture);
 
-            await shitcoin.connect(owner).faucet(10); // Give coin to owner
-            await taskmarket.connect(owner).NewTask(otherAccount, 10); // Create new task
+            await shitcoin.connect(addressA).faucet(10); // Give coin to owner
+            await taskmarket.connect(addressA).NewTask(addressB, 10); // Create new task
             
-            await taskmarket.connect(otherAccount).FinishTask(0); // OtherAccount finished task
-            await taskmarket.connect(owner).AcceptTask(0);
-            await expect((await taskmarket.tasks(0)).owner).to.not.equal(owner); // Check that the task has been cleared
-            await expect(await shitcoin.wallets(otherAccount)).to.equal(10); // Check that the money has been moved to correct account
+            await taskmarket.connect(addressB).FinishTask(0); // OtherAccount finished task
+            await taskmarket.connect(addressA).AcceptTask(0);
+            await expect((await taskmarket.tasks(0)).owner).to.not.equal(addressA); // Check that the task has been cleared
+            await expect(await shitcoin.wallets(addressB)).to.equal(10); // Check that the money has been moved to correct account
         })
     })
 /*
